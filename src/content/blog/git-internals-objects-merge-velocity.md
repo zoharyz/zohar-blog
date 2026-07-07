@@ -525,7 +525,70 @@ Consider also:
 Different teams, different needs. The strategy you choose doesn't change how Git works—it just changes how your history tells your team's story.
 
 ## Part 4: Team Velocity Impact
-[TO WRITE]
+
+### Clear History = Fast Code Reviews
+
+Here's something that happens every day in real teams: a pull request lands on your desk, and you're staring at a commit history that looks like this:
+
+```
+abc1234 Fix bug in merge conflict detection
+def5678 Actually, let me try this approach instead
+ghi9012 Revert previous change, that broke tests
+jkl3456 Fix the thing we just reverted
+mno7890 Add feature we're reviewing
+```
+
+You're reviewing a single feature, but you're wading through five commits—half of which are debugging and reverting. Your brain burns cycles figuring out "which changes matter?" You have to re-read multiple commits to build a mental model of what the feature actually does.
+
+Now imagine the same feature with a clean, rebase-based history:
+
+```
+abc1234 Refactor merge base calculation for efficiency
+def5678 Add conflict detection for edge cases
+```
+
+Two commits. Both are intentional. Both tell a story. Each one is self-contained and reviewable. Your code review is faster because the history itself is uncluttered.
+
+Here's the connection to Git internals: when you rebase, you're using three-way merge locally (replaying commits on main's tip) and surfacing conflicts immediately. Small, tight commits let you resolve conflicts early. When you merge a feature into main, the history is pristine—no intermediate debugging steps, no failed attempts. Reviewers see the finished work.
+
+The velocity impact is real. Teams with clean histories spend less time reviewing. Code gets merged faster. Feedback cycles tighten. And when a bug appears months later, you bisect through a linear history instead of a branching mess. That's the payoff of understanding how commits actually work: you choose strategies that make your history readable.
+
+### Fewer Conflicts = Faster Merges
+
+Merge conflicts are expensive. They interrupt your workflow. They require manual resolution. They introduce risk—if you resolve a conflict wrong, you silently introduce a bug that passes code review because everyone assumes Git got it right.
+
+Understanding the three-way merge algorithm helps you avoid conflicts in the first place.
+
+The key insight: conflicts happen when both branches change the same line differently. The more time between when a branch creates and when it merges, the more opportunities for main to diverge. Long-lived branches are conflict magnets.
+
+Smart teams use rebase to surface conflicts early. Here's the pattern: feature branches rebase against main daily. Every time you rebase, Git performs three-way merge. If conflicts exist, you resolve them locally, in small, digestible pieces. By the time the feature is ready to merge, either there are no conflicts (you resolved them all locally) or they're trivial.
+
+Compare this to a team that merges once per week: branches live for seven days, main changes ten times a day, and suddenly you're merging into a version of main that's completely different from what the branch was built on. Conflicts explode. The merge becomes a days-long effort instead of minutes.
+
+The velocity implication: merge conflicts are bottlenecks. A team that rebases frequently (small conflicts immediately) spends the same total time resolving conflicts as a team that merges infrequently (huge conflict later)—but the impact is radically different. Early conflicts are resolved by one person locally. Late conflicts block the entire team. One feels like work. The other feels like waiting.
+
+Add this to your toolkit: if your team struggles with merge conflicts, don't blame Git. Look at your branch strategy. Short-lived branches + frequent rebasing = fewer conflicts, faster velocity.
+
+### Onboarding & Consistency
+
+Here's a friction point that most teams overlook: every time a developer creates a branch, they face a decision. "Should I rebase or merge when I'm done?" If the team doesn't have a clear answer, they spend mental energy on that decision every single time.
+
+When your team has a consistent merge strategy, onboarding is dramatically faster. A new developer learns: "We rebase on this team." Done. They follow the pattern. No decision to make. No ambiguity.
+
+Consistency removes cognitive overhead. Decisions that should be automatic become automatic. The new developer spends their energy on the code, not on workflow logistics.
+
+Beyond onboarding, consistency builds institutional knowledge. When someone reads your history six months later, they know exactly what to expect. If they see a linear history, they know every commit in main is production-ready code. If they see merge commits, they know integration points are marked. The history isn't just a record—it's documentation of *how your team works*.
+
+Inconsistency creates friction. One developer rebases, another merges, another squashes. The history becomes a patchwork. Reviewers stumble. New developers are confused. You waste time debating "should this be a merge or rebase?" when you should be writing code.
 
 ## Conclusion
-[TO WRITE]
+
+You started this essay not understanding why Git works the way it does. You wondered why it cares about content hashing, why three-way merge exists, why merge strategies matter. Now you know: every design choice cascades outward and shapes how your team collaborates.
+
+Git's content addressing—hashing commits based on their full state—makes history immutable and verifiable. That matters less in day-to-day work and more on the rare day someone accidentally corrupts a repository. Git's three-way merge algorithm uses a common ancestor to resolve conflicts intelligently. That's the engine. The merge strategy—merge commits, rebase, squash—is how you arrange the result. All three strategies use three-way merge under the hood. What differs is philosophy: Do you preserve full integration history? Do you linearize for readability? Do you hide implementation details?
+
+There's no universally "correct" answer. A small startup might rebase ruthlessly because they value a clean main branch. A large team might use merge commits for auditability. A team with frequent small fixes might squash liberally. All are right, because they're aligned with their team's values.
+
+The payoff is concrete and measurable. Clean histories enable faster code reviews. Smart rebasing reduces merge conflicts. Consistent strategies speed up decision-making. Together, these improvements compound into something that looks like improved developer velocity—but it's really just reduced friction.
+
+Next time you're debating merge strategy, remember: you're not just choosing a workflow. You're choosing how your team reads and understands your codebase. You're optimizing for how humans collaborate with Git. Understand the internals. Choose the strategy that fits your team. Watch your velocity improve.
