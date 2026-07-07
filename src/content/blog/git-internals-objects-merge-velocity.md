@@ -336,7 +336,193 @@ The conflict markers aren't obstacles—they're information. They show you exact
 Recursive merge ensures that even complex branching histories merge correctly, finding the right base automatically. This makes Git reliable even as team workflows grow more intricate.
 
 ## Part 3: Merging Strategies & When to Use Them
-[TO WRITE]
+
+### Understanding Merging Strategies
+
+You now understand how three-way merge works—Git finds a common ancestor, diffs both sides against it, and reconciles the changes. But three-way merge is just the mechanism. The *strategy* is how you organize the result in your commit history.
+
+Think of it this way: three-way merge is the engine. The strategy is the transmission. The engine always runs the same way; the transmission decides what you do with the output.
+
+Three main strategies exist: **merge commits** (keep both histories), **rebase** (linearize), and **squash** (collapse). All use three-way merge under the hood. The strategy just determines how commits are arranged afterward. Different strategies tell different stories about how your team worked.
+
+### Merge Commits: Preserving History
+
+A **merge commit** is a regular commit, but with a twist: it has two parents instead of one.
+
+When you run `git merge feature-branch` (without flags), Git creates a merge commit on main that says: "I integrated feature-branch here." That commit has one parent on main and one on feature-branch.
+
+Visually:
+
+```
+Before merge:
+    feature
+       ↓
+    c3 → c4
+    ↑
+main: c1 → c2
+
+After merge (merge commit M):
+    feature
+       ↓
+    c3 → c4
+    ↑    ↑
+main: c1 → c2 → M
+```
+
+The merge commit M has two parents: c2 (from main) and c4 (from feature). This is just a regular commit with `git show M` displaying the merged content.
+
+**Advantages:**
+
+- **Full history preserved**: You can see exactly where integrations happened. `git log --graph --oneline --all` shows the branching clearly.
+- **Traceability**: Teams can audit which commits came from which branch and when integrations occurred.
+- **Integration points visible**: Future developers reading history know "this is where we merged in the database refactor."
+
+**Disadvantages:**
+
+- **Complex history**: With many branches, the log becomes tangled. Bisecting (using `git bisect` to find a bug) becomes harder because the commit graph branches.
+- **Hard to read**: "What's the simplest version of what happened?" gets muddied by merge commits.
+- **Integration spam**: On busy projects with frequent merges, the history fills with merge commits that add no context.
+
+**When to use:**
+
+- Teams of 10+ who need traceability
+- Large integrations (multiday feature work)
+- Regulatory or audit requirements
+
+**Git command:**
+
+```bash
+git merge feature-branch
+```
+
+See the full story with:
+
+```bash
+git log --graph --oneline --all
+```
+
+### Rebase: Linear History
+
+**Rebase** doesn't create a merge commit. Instead, it replays your commits on top of the target branch, creating a linear history.
+
+Here's what happens: `git rebase main` takes the commits on your current branch (feature), finds their common ancestor with main, and re-applies them on top of main's tip. The commits have the same content but new hashes (because their parents changed).
+
+Visually:
+
+```
+Before rebase:
+main: c1 → c2 → c5
+        ↓
+     feature: c3 → c4
+
+After rebase:
+main: c1 → c2 → c5 → c3' → c4'
+(commits c3 and c4 are replayed with new hashes, on top of c5)
+```
+
+Why new hashes? Because commit hashes include the parent's hash. Change the parent, and the entire hash changes. The content is identical, but Git sees it as a new commit.
+
+**Advantages:**
+
+- **Clean, linear history**: No branching in the log. Easier to read and understand.
+- **Simpler bisect**: `git bisect` searches linearly, so debugging is faster.
+- **No merge commits**: Every commit is a real piece of work, not an integration marker.
+- **Great for small features**: One person's work is one coherent line.
+
+**Disadvantages:**
+
+- **Rewritten history**: If the branch is already shared, rebasing breaks others' copies. Only rebase work that's local.
+- **No integration markers**: Reading history, you can't easily tell where features came from.
+- **Hides complexity**: If a feature took 10 commits, you might not see that in a clean rebase.
+
+**When to use:**
+
+- Small teams (3–5 people)
+- Short-lived branches (features completed in days)
+- Goal is a pristine main branch
+
+**Git commands:**
+
+```bash
+git rebase main          # Rebase current branch onto main
+git rebase -i HEAD~3     # Interactively rebase last 3 commits
+```
+
+**Critical rule: Only rebase commits you haven't pushed.** Once commits are shared, rebasing breaks other developers' repositories. Use this on local work only.
+
+### Squash: Clean Features
+
+**Squash** merging combines multiple commits into one before integrating.
+
+If your feature has 5 commits (3 attempts, 2 fixes), squash merging creates a *single* commit with the final result. The intermediate steps vanish from main's history.
+
+Visually:
+
+```
+Feature branch:
+c1 → c2 → c3 (5 commits: attempts, experiments, fixes)
+
+After squash merge:
+main: base → merged (one commit, all changes squashed together)
+```
+
+The squashed commit has one parent: the tip of main. It's as if the entire feature was written in one shot.
+
+**Advantages:**
+
+- **Very clean**: One feature = one commit. No mess.
+- **Easier to revert**: If you need to undo a feature, one `git revert` does it.
+- **Readable main**: No commit spam, no "fix typo" or "debug attempt" clutter.
+
+**Disadvantages:**
+
+- **Lost granularity**: You can't bisect into the feature's steps. All-or-nothing debugging.
+- **Hides complexity**: Reviewers can't see the iterative steps that led to the solution.
+- **Blame is fuzzy**: `git blame` points to one squashed commit, not the incremental change.
+
+**When to use:**
+
+- Small features (1–3 logical changes)
+- Debugging or WIP commits you want hidden
+- Want a pristine, minimal main branch
+
+**Git commands:**
+
+```bash
+# Merge and squash in one step
+git merge --squash feature-branch
+git commit -m "Add feature X"
+
+# Or interactively rebase and squash locally first
+git rebase -i main
+# Mark commits as 'squash' or 's'
+```
+
+### Choosing a Strategy: Decision Tree
+
+Which strategy fits your team? Here's a practical guide:
+
+**Small team (3–5 people)?**
+→ Use **rebase**. You value clean history and don't need traceability markers.
+
+**Medium team (5–20 people)?**
+→ Use **merge commits** for features, **rebase** on main. Features have two parents (traceability), but main stays mostly linear.
+
+**Large team (20+ people)?**
+→ Use **merge commits** everywhere. Traceability and auditability matter more than history cleanliness.
+
+**Any team, any size?**
+→ Use **squash** for debugging commits, experimental branches, or WIP. Keep main squeaky clean.
+
+**Key insight**: All three strategies use three-way merge under the hood. The strategy is purely about post-merge organization. There's no "best" strategy—only what works for your team's values.
+
+Consider also:
+
+- **Culture**: Does your team care about seeing how features were built, or just the final result?
+- **Size**: Bigger teams need more traceability.
+- **Workflow**: Fast-moving startups might prefer rebase; established products prefer merge commits.
+
+Different teams, different needs. The strategy you choose doesn't change how Git works—it just changes how your history tells your team's story.
 
 ## Part 4: Team Velocity Impact
 [TO WRITE]
