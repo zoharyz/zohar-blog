@@ -1,0 +1,37 @@
+---
+import ContentLayout from '../../layouts/ContentLayout.astro';
+import { getCollection, render } from 'astro:content';
+import { getPublishedContent } from '../../lib/content';
+
+export async function getStaticPaths() {
+  const essays = await getCollection('essays');
+  const published = getPublishedContent(essays);
+  return published.map((essay) => {
+    const slug = essay.id.replace(/\.mdx?$/, '');
+    return {
+      params: { slug },
+      props: { essay },
+    };
+  });
+}
+
+interface Props {
+  essay: any;
+}
+
+const { essay } = Astro.props;
+const { Content } = await render(essay);
+---
+
+<ContentLayout
+  title={essay.data.title}
+  description={essay.data.description}
+  date={essay.data.date}
+  updated={essay.data.updated}
+  tags={essay.data.tags}
+  connections={essay.data.connections}
+  content=""
+  type="essay"
+>
+  <Content />
+</ContentLayout>

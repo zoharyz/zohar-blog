@@ -1,0 +1,17 @@
+---
+title: "Logs Are Not Observability"
+description: "Logs are data. Observability is the ability to understand your system from that data."
+date: "2026-06-20"
+tags: ["observability"]
+status: "published"
+---
+
+I see many teams conflate logging with observability.
+
+They ship logs to a service, create a few dashboards, and declare victory. But that's not observability. That's just... data storage.
+
+Observability is the ability to ask arbitrary questions about your system's behavior without having instrumented for them in advance.
+
+Logs alone don't give you that. You need logs *plus* structured fields, *plus* the ability to filter and correlate, *plus* someone who knows how to ask the right questions.
+
+Most teams stop after shipping logs.

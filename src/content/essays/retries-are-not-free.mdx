@@ -1,0 +1,54 @@
+---
+title: "Retries Are Not Free"
+description: "Why retry logic creates hidden bugs in distributed systems."
+date: "2026-07-06"
+tags: ["distributed-systems", "reliability"]
+status: "published"
+featured: true
+connections:
+  - "Idempotency"
+  - "Observability"
+---
+
+I used to think retries were harmless. They're just logic that says "if something failed, try it again." What's the worst that could happen?
+
+Then I learned they are one of the easiest ways to accidentally create duplicate side effects.
+
+## The Deceptive Simplicity
+
+A typical retry looks like this:
+
+```typescript
+async function sendPayment(amount: number) {
+  let retries = 0;
+  while (retries < 3) {
+    try {
+      return await api.post('/payments', { amount });
+    } catch (e) {
+      retries++;
+      await sleep(1000 * retries);
+    }
+  }
+  throw new Error('Payment failed');
+}
+```
+
+It seems straightforward. But consider what happens if the API receives the request, processes the payment, but the response never makes it back to the client. The client sees a timeout and retries. Now the payment is processed twice.
+
+## The Cost
+
+Duplicate payments are expensive. Duplicate database writes cause data corruption. Duplicate messages in queues cause cascading failures. Retries without idempotency are a tax on reliability.
+
+## The Fix
+
+Every operation that might be retried must be idempotent. This is non-negotiable.
+
+- **Payments**: Use idempotency keys. Every request gets a unique ID that the server stores. If the same ID arrives twice, the server returns the cached response.
+- **Database writes**: Use unique constraints or check-before-write logic.
+- **Async operations**: Design state machines that can safely replay operations.
+
+## Retries are a Product Decision
+
+Once you accept that retries require idempotency, you realize: retries are not just a technical detail. They're a commitment to your system's reliability model.
+
+If you don't have idempotency, you don't have retries. You have unreliability.

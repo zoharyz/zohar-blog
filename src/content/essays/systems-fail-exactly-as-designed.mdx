@@ -1,0 +1,40 @@
+---
+title: "Systems Fail Exactly as Designed"
+description: "Every system is perfectly optimized to produce the behavior it currently produces."
+date: "2026-06-28"
+tags: ["systems", "reliability"]
+status: "published"
+featured: true
+---
+
+Here's a humbling truth: your system is not broken. It's working exactly as designed.
+
+When something fails, we often blame bad luck, edge cases, or cosmic rays. But most failures are deterministic. They're the inevitable output of the system's design.
+
+A system that crashes under load wasn't designed for high load. A system with data corruption wasn't designed with atomicity. A system with cascading failures wasn't designed with isolation.
+
+## Design vs. Intent
+
+There's a difference between what you *intended* to build and what you *actually* built.
+
+Your intent might be: "This system should handle 10,000 requests per second." But if you allocated memory for only 1,000 concurrent connections, your system is designed to handle 1,000. It will fail at 1,001 and you shouldn't be surprised.
+
+The system didn't fail. It succeeded at what it was designed to do: use that much memory before crashing.
+
+## The Real Diagnosis
+
+When you're debugging a failure, ask: "What in my system design caused this?" Not "What went wrong?" but "What am I doing that leads to this outcome?"
+
+- Timeouts? Your system is designed to give up after N seconds.
+- Lost messages? Your system is designed to lose messages if something dies before persisting them.
+- Race conditions? Your system is designed to have unsynchronized access to shared state.
+
+None of this is accident. It's all intentional (or at least, the result of intentional choices).
+
+## The Path Forward
+
+Stop blaming the system. Start designing the system differently.
+
+If you want higher availability, design for redundancy. If you want stronger consistency, design for coordination. If you want faster performance, design for parallelism.
+
+The system will do what you designed it to do. Make sure that's what you actually want.

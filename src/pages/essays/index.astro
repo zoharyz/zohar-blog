@@ -1,0 +1,51 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import ArticleList from '../../components/ArticleList.astro';
+import { getCollection } from 'astro:content';
+import { getPublishedContent, sortContentByDate } from '../../lib/content';
+
+const essays = await getCollection('essays');
+const publishedEssays = sortContentByDate(getPublishedContent(essays));
+---
+
+<BaseLayout title="Essays" description="Read my essays on software engineering, distributed systems, and more.">
+  <Header />
+  <main>
+    <div class="container">
+      <h1>Essays</h1>
+    </div>
+    <ArticleList articles={publishedEssays} type="essays" />
+  </main>
+</BaseLayout>
+
+<style>
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 2rem 2rem;
+  }
+
+  h1 {
+    font-size: 2.4rem;
+    font-family: var(--font-sans);
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .subtitle {
+    color: var(--color-text-secondary);
+    font-size: 1.1rem;
+    margin: 0.5rem 0 2rem;
+  }
+
+  @media (max-width: 768px) {
+    .container {
+      padding: 0 1.5rem 2rem;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+    }
+  }
+</style>

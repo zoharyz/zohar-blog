@@ -1,0 +1,37 @@
+---
+import ContentLayout from '../../layouts/ContentLayout.astro';
+import { getCollection, render } from 'astro:content';
+import { getPublishedContent } from '../../lib/content';
+
+export async function getStaticPaths() {
+  const snippets = await getCollection('snippets');
+  const published = getPublishedContent(snippets);
+  return published.map((snippet) => {
+    const slug = snippet.id.replace(/\.mdx?$/, '');
+    return {
+      params: { slug },
+      props: { snippet },
+    };
+  });
+}
+
+interface Props {
+  snippet: any;
+}
+
+const { snippet } = Astro.props;
+const { Content } = await render(snippet);
+---
+
+<ContentLayout
+  title={snippet.data.title}
+  description={snippet.data.description}
+  date={snippet.data.date}
+  updated={snippet.data.updated}
+  tags={snippet.data.tags}
+  connections={snippet.data.connections}
+  content=""
+  type="snippet"
+>
+  <Content />
+</ContentLayout>

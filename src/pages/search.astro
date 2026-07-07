@@ -1,0 +1,167 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+---
+
+<BaseLayout title="Search" description="Search the blog">
+  <Header />
+  <main class="container">
+    <h1>Search</h1>
+    <div id="search"></div>
+  </main>
+</BaseLayout>
+
+<script>
+  let pagefind: any;
+
+  async function initPagefind() {
+    try {
+      const pagefindPath = new URL('/pagefind/pagefind.js', window.location.origin).href;
+      const pagefindModule = await import(/* @vite-ignore */ pagefindPath);
+      pagefind = pagefindModule;
+      await pagefind.init();
+    } catch (e) {
+      console.log('Pagefind not available. Run `npm run build && npx pagefind --source dist` to enable search.');
+    }
+  }
+
+  const searchElement = document.getElementById('search');
+  if (searchElement) {
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.placeholder = 'Search essays, snippets, and ideas...';
+    searchInput.className = 'search-input';
+    searchElement.appendChild(searchInput);
+
+    const resultsContainer = document.createElement('div');
+    resultsContainer.className = 'results';
+    searchElement.appendChild(resultsContainer);
+
+    initPagefind();
+
+    searchInput.addEventListener('input', async (e) => {
+      if (!pagefind) {
+        resultsContainer.innerHTML = '<p class="no-results">Search is not available yet. Please rebuild the site.</p>';
+        return;
+      }
+
+      const value = (e.target as HTMLInputElement).value;
+      if (!value) {
+        resultsContainer.innerHTML = '';
+        return;
+      }
+
+      const results = await pagefind.search(value);
+      resultsContainer.innerHTML = '';
+
+      if (results.results.length === 0) {
+        resultsContainer.innerHTML = '<p class="no-results">No results found.</p>';
+        return;
+      }
+
+      const resultsList = document.createElement('ul');
+      resultsList.className = 'results-list';
+
+      for (const result of results.results) {
+        const data = await result.data();
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <a href="${data.url}" class="result-link">
+            <h3>${data.title}</h3>
+            <p>${data.excerpt}</p>
+          </a>
+        `;
+        resultsList.appendChild(li);
+      }
+
+      resultsContainer.appendChild(resultsList);
+    });
+  }
+</script>
+
+<style>
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  #search {
+    margin-bottom: 2rem;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--color-link);
+    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+  }
+
+  .results {
+    margin-top: 2rem;
+  }
+
+  .no-results {
+    color: var(--color-text-muted);
+    text-align: center;
+    padding: 2rem;
+    font-style: italic;
+  }
+
+  .results-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .results-list li {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .results-list li:last-child {
+    border-bottom: none;
+  }
+
+  .result-link {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .result-link h3 {
+    margin: 0 0 0.5rem;
+    color: var(--color-link);
+    font-size: 1.1rem;
+  }
+
+  .result-link h3:hover {
+    color: var(--color-link-hover);
+  }
+
+  .result-link p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 640px) {
+    h1 {
+      font-size: 1.5rem;
+    }
+  }
+</style>

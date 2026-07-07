@@ -1,0 +1,105 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+---
+
+<BaseLayout title="About" description="About Zohar Yzgeav">
+  <Header />
+  <main class="container">
+    <article class="prose">
+      <h1>About</h1>
+
+      <p>
+        I'm interested in the intersection of engineering excellence and human-centered design. My work focuses on building systems that are not just technically sound, but sustainable—systems that teams can understand, maintain, and evolve over years. I believe the best engineering decisions are made with a deep understanding of trade-offs: between consistency and availability, simplicity and power, immediate needs and future flexibility.
+      </p>
+
+      <p>
+        I've spent years designing and building systems from first principles—distributed systems, backend infrastructure, developer tools, and products that bridge technology with human needs. This experience has taught me that great software emerges from understanding both the problem domain and the people who will use and maintain the system.
+      </p>
+
+      <p>
+        This blog is where I explore and share these ideas. I write about system architecture, reliability patterns, infrastructure decisions, and the philosophy behind scaling systems—not just the mechanics, but the thinking that leads to good design. The goal is to build shared understanding: to help other engineers navigate complexity with clarity.
+      </p>
+
+      <p>
+        Beyond engineering, I find inspiration in music (both performing and listening), understanding human psychology and what makes people tick, and cooking—all of which teach similar lessons: attention to detail, understanding your audience, balancing art with science, and knowing when constraints breed creativity.
+      </p>
+
+      <h2>Connect</h2>
+
+      <p>
+        Find me on <a href="https://www.linkedin.com/in/zohar-yzgeav-94b52369/" target="_blank">LinkedIn</a> to connect and follow my professional journey.
+      </p>
+
+      <h2>This site</h2>
+
+      <p>
+        Built with <a href="https://astro.build" target="_blank">Astro</a>, <a href="https://mdxjs.com" target="_blank">MDX</a>, and <a href="https://tailwindcss.com" target="_blank">Tailwind CSS</a>. Deployed to <a href="https://vercel.com" target="_blank">Vercel</a>.
+      </p>
+
+      <p>
+        The design is intentionally minimal—inspired by the simplicity of <a href="http://www.paulgraham.com/essays.html" target="_blank">Paul Graham's essays</a>.
+      </p>
+    </article>
+  </main>
+</BaseLayout>
+
+<style>
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+  }
+
+  .prose {
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--color-text);
+  }
+
+  h1 {
+    font-size: 2.4rem;
+    font-family: var(--font-sans);
+    font-weight: 700;
+    margin: 0 0 2rem;
+  }
+
+  h2 {
+    font-size: 1.6rem;
+    font-family: var(--font-sans);
+    font-weight: 700;
+    margin: 2.5rem 0 1.5rem;
+    border-bottom: 2px solid var(--color-border);
+    padding-bottom: 0.5rem;
+  }
+
+  p {
+    margin-bottom: 1.2rem;
+    line-height: 1.75;
+  }
+
+  a {
+    color: var(--color-link);
+    text-decoration: none;
+    border-bottom: 1px solid var(--color-link);
+  }
+
+  a:hover {
+    color: var(--color-link-hover);
+    border-bottom-color: var(--color-link-hover);
+  }
+
+  @media (max-width: 768px) {
+    .container {
+      padding: 2rem 1.5rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+    }
+
+    h2 {
+      font-size: 1.35rem;
+    }
+  }
+</style>

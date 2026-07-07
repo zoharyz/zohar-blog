@@ -1,0 +1,123 @@
+---
+interface Article {
+  id: string;
+  data: {
+    title: string;
+    description: string;
+    date: Date;
+    tags?: string[];
+  };
+}
+
+interface Props {
+  articles: Article[];
+  type: 'essays' | 'snippets' | 'ideas';
+}
+
+const { articles, type } = Astro.props;
+
+const sorted = articles.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+---
+
+<div class="article-list">
+  {sorted.length === 0 ? (
+    <p class="empty">No articles yet.</p>
+  ) : (
+    <ul>
+      {sorted.map((article) => {
+        const slug = article.id.replace(/\.mdx?$/, '');
+        return (
+          <li>
+            <a href={`/${type}/${slug}`} class="title">{article.data.title}</a>
+            <p class="meta">
+              <time>{article.data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</time>
+            </p>
+            <p class="description">{article.data.description}</p>
+          </li>
+        );
+      })}
+    </ul>
+  )}
+</div>
+
+<style>
+  .article-list {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  .empty {
+    color: var(--color-text-muted);
+    text-align: center;
+    padding: 3rem 0;
+    font-style: italic;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 2.5rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  li:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+
+  .title {
+    display: block;
+    font-size: 1.3rem;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    color: var(--color-text);
+    text-decoration: none;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+    border: none;
+  }
+
+  .title:hover {
+    color: var(--color-link);
+  }
+
+  .meta {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    margin: 0.5rem 0;
+    font-family: var(--font-sans);
+  }
+
+  .description {
+    color: var(--color-text-secondary);
+    line-height: 1.65;
+    margin-top: 0.75rem;
+    font-size: 0.95rem;
+  }
+
+  @media (max-width: 768px) {
+    .article-list {
+      padding: 0 1.5rem;
+    }
+
+    .title {
+      font-size: 1.15rem;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .article-list {
+      padding: 0 1rem;
+    }
+
+    .title {
+      font-size: 1.05rem;
+    }
+  }
+</style>
