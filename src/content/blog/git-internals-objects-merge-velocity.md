@@ -6,20 +6,9 @@ tags: ["git", "internals", "merge-strategies", "developer-velocity"]
 category: "engineering"
 ---
 
-<!-- 
-OUTLINE:
-- Introduction (~200 words)
-- Part 1: Git Objects & Content Addressing (~800 words)
-- Part 2: Three-Way Merge Algorithm (~1200 words)
-- Part 3: Merging Strategies (~1000 words)
-- Part 4: Team Velocity Impact (~600 words)
-- Conclusion (~100 words)
-Total: ~3900 words
--->
-
 ## Introduction
 
-You use Git every day, but there's something important happening beneath the surface that most developers never think about. When you run `git commit`, Git doesn't store what changed. It doesn't store deltas or diffs. Instead, it takes a complete snapshot of your entire project—every file, every byte—and stores it as a single immutable blob. Then it identifies that snapshot by calculating the SHA-1 hash of its content.
+You use Git every day, but there's something fundamental happening beneath the surface that most developers never think about. When you run `git commit`, Git doesn't store what changed. It doesn't store deltas or diffs. Instead, it takes a complete snapshot of your entire project—every file, every byte—and stores it as a single immutable blob. Then it identifies that snapshot by calculating the SHA-1 hash of its content.
 
 This one design choice cascades through everything Git does well. It's why your history is safe from tampering. It's why you can move branches around without losing work. It's why merging isn't as catastrophic as it could be.
 
@@ -329,7 +318,7 @@ This is powerful for complex histories where multiple integration points exist. 
 
 ### Key Takeaways
 
-Three-way merge is elegant because it mirrors how humans think about changes. You don't ask "are these two files different?" You ask "what did each side change relative to what they started with?" That understanding unlocks automatic conflict resolution for independent changes and precise conflict reporting for true conflicts.
+Three-way merge is intuitive because it mirrors how humans think about changes. You don't ask "are these two files different?" You ask "what did each side change relative to what they started with?" That understanding unlocks automatic conflict resolution for independent changes and precise conflict reporting for true conflicts.
 
 The conflict markers aren't obstacles—they're information. They show you exactly what Git couldn't reconcile, and why. And the base version is always recoverable with git show, so you're never without context.
 
