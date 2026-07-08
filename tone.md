@@ -68,6 +68,51 @@ Write to clarify thinking, not to impress. The goal is to help readers understan
 - Don't make absolute claims without evidence
 - Don't write for multiple audiences at once—pick one
 
+## Guard Rails: LLM Patterns to Avoid
+
+### 1. No Double Hyphens (--) as Em-Dashes
+- **Problem**: LLMs commonly write "--" instead of proper em-dashes or rewording
+- **Bad**: "This approach works well -- it's fast and reliable"
+- **Good**: "This approach works well. It's fast and reliable." (or use proper em-dash: "This approach works well—it's fast and reliable")
+- **Check**: Search for " -- " in your writing and replace with either a period, em-dash, or semicolon
+- **Why**: Double hyphens are a telltale sign of automated writing. They distract and break your natural voice.
+
+### 2. Sound Human, Not Like a Machine
+- **Problem**: LLMs use generic, formal phrases that kill authenticity
+- **Bad**: "It is worth noting that" / "It should be mentioned that" / "It bears emphasizing that"
+- **Good**: Just say the thing directly. "This matters because..." or "Here's why..."
+- **Bad**: "One might consider" / "It could be argued that" / "Some would say"
+- **Good**: "I think..." / "In practice, I've found..." / "We discovered..."
+- **Bad**: "Leveraging synergies to maximize operational efficiency"
+- **Good**: "Making this change helped us move faster"
+- **Why**: Readers want to hear from a person, not a polished corporate memo. Authenticity is more compelling than formality.
+
+### 3. Natural Contractions and Colloquialism
+- **Use**: "don't", "it's", "you're", "we've", "can't"
+- **Avoid**: "do not", "it is", "you are", "we have", "cannot"
+- **Use**: "a lot of", "kind of works"
+- **Avoid**: "numerous", "functions adequately"
+- **Why**: Contractions and casual phrasing are how humans actually speak. They make writing feel alive.
+
+### 4. Specific Examples, Never Generic Statements
+- **Bad**: "This can have significant implications for performance."
+- **Good**: "On a 10GB dataset, this approach took 2 seconds instead of 20."
+- **Bad**: "Teams often struggle with this."
+- **Good**: "At three companies I've worked at, we all made this mistake in year two."
+- **Why**: Generic statements are easy for LLMs to generate and immediately mark writing as inauthentic.
+
+### 5. Real Transitions, Not Clichés
+- **Avoid**: "It goes without saying that...", "As mentioned earlier...", "Moving forward...", "At the end of the day..."
+- **Use**: Actual connections between ideas. "But here's the thing:" / "This leads to a problem:" / "You might think X, but actually Y."
+- **Why**: Cliché transitions scream "written by algorithm."
+
+### Final Check
+Before publishing, ask yourself:
+- Would I say this in a conversation with a colleague?
+- Does this sound like me, or like a chatbot trying to be professional?
+- Did I use "--" anywhere? (Delete it.)
+- Can I make this more specific or more direct?
+
 ## Example Voice
 
 **Bad**: "The architecture paradigm necessitates optimization of systemic efficiency metrics."

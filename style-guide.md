@@ -245,3 +245,34 @@ async function retry<T>(
 - [ ] Confident where confident, uncertain where uncertain
 - [ ] Could be understood by an engineer new to the topic
 - [ ] Could be respected by an expert in the topic
+- [ ] **No "--" (double hyphens) in the text** — use em-dash (—) or reword
+- [ ] **Sounds human, not robotic** — would I say this in conversation?
+- [ ] **No generic LLM phrases** — "It goes without saying", "As mentioned", "At the end of the day"
+- [ ] **Uses contractions naturally** — "don't", "it's", "we've" not "do not", "it is", "we have"
+- [ ] **Examples are specific, not generic** — actual numbers, real scenarios, not "it can have implications"
+
+## LLM Red Flags (Delete These)
+
+**Phrases that scream "written by AI":**
+- "It is worth noting that..."
+- "It should be mentioned that..."
+- "One might consider..."
+- "It could be argued that..."
+- "Some would say..."
+- "In conclusion..."
+- "As previously stated..."
+- "The aforementioned..."
+- "Needless to say..."
+- "It goes without saying..."
+- "At the end of the day..."
+- "Moving forward..."
+- "Leveraging" / "Synergize" / "Maximize" (corporate jargon)
+- "It has been found that..." (passive, vague)
+- "This has significant implications for..." (generic, vague)
+
+**Replace with:**
+- Direct statements: "This matters because..."
+- First person: "I've found..." / "We discovered..."
+- Active voice: "We changed..." not "It was changed..."
+- Specific details: "This took 2 seconds instead of 20" not "faster"
+- Real transitions: "Here's the thing:" / "But that misses something:" / "In practice, I've seen..."

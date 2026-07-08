@@ -127,6 +127,56 @@ connections: []          # Optional, related essay ideas
 4. Read the first and last paragraphs—do they align?
 5. Ask: would I still publish this in a year?
 
+## Guard Rails: Authenticity & Human Voice
+
+**Every piece must pass these checks:**
+
+### 1. No Double Hyphens (--) 
+Search your text for " -- " and replace with:
+- A period (.) for a hard break
+- An em-dash (—) if you want flow
+- A semicolon (;) if ideas are closely related
+- Reword entirely if you're forcing the connection
+
+**Bad**: "This works well -- it's both fast and reliable"
+**Good**: "This works well. It's both fast and reliable." or "This works well—it's both fast and reliable."
+
+### 2. Sound Like Yourself, Not a Bot
+These phrases are AI dead-giveaways. Delete them:
+- "It is worth noting that..."
+- "It should be mentioned that..."  
+- "One might consider..."
+- "Some would say..."
+- "In conclusion, it is clear that..."
+- "Moving forward..."
+- "At the end of the day..."
+
+Replace with direct language:
+- "Here's what I learned..."
+- "This matters because..."
+- "In practice, I've found..."
+- "We discovered..."
+
+### 3. Use Natural Contractions
+- Write: "don't", "it's", "we've", "can't", "we're"
+- Don't write: "do not", "it is", "we have", "cannot", "we are"
+- Exception: Avoid contractions only when emphasizing negation for impact ("We will not tolerate this.")
+
+### 4. Specific > Generic
+Every claim needs an example or number:
+- **Bad**: "This can have significant implications for performance."
+- **Good**: "On our 10GB dataset, this change reduced query time from 45s to 2s."
+- **Bad**: "Teams struggle with this."
+- **Good**: "At three companies I worked at, we all made this mistake by year two."
+
+### 5. Show Your Thinking
+Don't just state conclusions:
+- **Bad**: "Retries are important for reliability."
+- **Good**: "We added retries for transient failures. At first, we thought they'd slow things down. Instead, we found they reduced our p99 latency because we stopped timing out on network hiccups."
+
+### Final Authenticity Check
+Before publishing, read one paragraph aloud. If it sounds like a corporate memo or a ChatGPT output, rewrite it. Your readers know the difference between human writing and automated writing. They prefer human.
+
 ## Code Examples
 
 - Keep them short (5–15 lines usually)
