@@ -83,6 +83,7 @@ description: "One sentence: what will readers learn or think about?"
 date: "YYYY-MM-DD"
 tags: ["tag1", "tag2"]  # 2-4 tags, lowercase, hyphenated
 status: "published"      # or "draft"
+readTime: "X min read"   # Estimated reading time (e.g., "8 min read", "12 min read")
 featured: true/false     # Optional, for important essays
 connections: []          # Optional, related essay ideas
 ---
@@ -98,6 +99,17 @@ connections: []          # Optional, related essay ideas
 - One sentence that explains what the reader gets from this piece
 - Not a teaser—actually describe the content
 - Avoid marketing language
+
+### Read Time Guidelines
+- **Formula**: ~200 words per minute for technical content
+- **Calculate**: Total word count ÷ 200 = minutes
+- **Format**: "8 min read" (use "min" abbreviation)
+- **Examples**:
+  - 1,500 words ÷ 200 = 7.5 → "8 min read"
+  - 2,000 words ÷ 200 = 10 → "10 min read"
+  - 3,500 words ÷ 200 = 17.5 → "17 min read"
+- **Note**: Technical content reads slower than news/blog posts, so use 200 wpm not 300 wpm
+- **Why it matters**: Readers make decisions about engagement based on time. Be honest about the commitment.
 
 ### Tags
 - Use consistently across posts
