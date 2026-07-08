@@ -9,11 +9,11 @@ readTime: "21 min read"
 
 ## Introduction
 
-You use Git every day, but there's something fundamental happening beneath the surface that most developers never think about. When you run `git commit`, Git doesn't store what changed. It doesn't store deltas or diffs. Instead, it takes a complete snapshot of your entire project—every file, every byte—and stores it as a single immutable blob. Then it identifies that snapshot by calculating the SHA-1 hash of its content.
+You use Git every day, but there's something fundamental happening beneath the surface that most developers never think about. When you run `git commit`, Git doesn't store what changed. It doesn't store deltas or diffs. Instead, it takes a complete snapshot of your entire project. Every file, every byte. It stores this as a single immutable blob. Then it identifies that snapshot by calculating the SHA-1 hash of its content.
 
 This one design choice cascades through everything Git does well. It's why your history is safe from tampering. It's why you can move branches around without losing work. It's why merging isn't as catastrophic as it could be.
 
-Most developers treat Git as a black box. You commit, you push, you pull, you merge. When conflicts happen, you resolve them and move on. But if you understand how Git actually works—how it represents history, how it decides what to merge, why certain conflicts appear—you make better decisions about how your team works together.
+Most developers treat Git as a black box. You commit, you push, you pull, you merge. When conflicts happen, you resolve them and move on. But if you understand how Git actually works, you make better decisions about how your team works together. You'll understand how it represents history, how it decides what to merge, and why certain conflicts appear.
 
 In this essay, we'll build that understanding from the ground up. We'll explore Git objects and content addressing, see how three-way merge works, look at different merge strategies and when to use them, and finally, understand how all of this affects your team's velocity.
 
@@ -23,9 +23,9 @@ Let's start with the foundation: Git objects.
 
 ### Git Objects: Blobs, Trees, and Commits
 
-Everything Git stores is an object. Git tracks four types: blobs, trees, commits, and tags. For this essay, we focus on the first three—they're the backbone of how Git represents your project and its history.
+Everything Git stores is an object. Git tracks four types: blobs, trees, commits, and tags. For this essay, we focus on the first three. They're the backbone of how Git represents your project and its history.
 
-A **blob** is just file content. When you commit `app.js`, Git doesn't store the filename or timestamp. It stores only the bytes and hashes them. The blob has no name, path, or metadata—just content. Identical files always produce the same blob hash.
+A **blob** is just file content. When you commit `app.js`, Git doesn't store the filename or timestamp. It stores only the bytes and hashes them. The blob has no name, path, or metadata. Just content. Identical files always produce the same blob hash.
 
 A **tree** is a directory snapshot. It's a list of entries where each points to a blob (file) or another tree (subdirectory). For this structure:
 
@@ -56,7 +56,7 @@ Fix bug in merge conflict detection
 
 That's it. No diffs. No deltas. Just: this is the complete state of the repo, here's who made it, when they made it, and what commit came before.
 
-The key insight: **this structure is deterministic**. Same tree, same parent, same timestamp, same message—same hash. Commit `abc123` today is identical to commit `abc123` next year on a different computer.
+The key insight: **this structure is deterministic**. Same tree, same parent, same timestamp, same message means same hash. Commit `abc123` today is identical to commit `abc123` next year on a different computer.
 
 ### Content Addressing: Commits as Hashes
 
@@ -77,15 +77,15 @@ Git hashes: tree ID, parent ID(s), author name and email, commit timestamp, and 
 
 This has three critical implications:
 
-**Immutability**: You can't change a commit. Modify the message, and the hash changes—it's now a different commit. This is why Git history feels permanent.
+**Immutability**: You can't change a commit. Modify the message, and the hash changes. It's now a different commit. This is why Git history feels permanent.
 
 **Tamper-evident**: Given commit hash `abc123`, you can verify it independently. If anyone modified the commit, the hash wouldn't match. This ensures integrity across networks.
 
-**Safe merging**: Two developers can make identical commits and Git will know they're the same—same hash. Git doesn't compare messages or timestamps; it just compares hashes.
+**Safe merging**: Two developers can make identical commits and Git will know they're the same. Same hash. Git doesn't compare messages or timestamps. It just compares hashes.
 
 ### The Commit DAG
 
-Commits form a directed acyclic graph, or **DAG**. "Directed" means relationships have direction: each commit points to its parent(s). "Acyclic" means no loops—you can't have a commit that eventually points back to itself. This structure is fundamental to how Git works.
+Commits form a directed acyclic graph, or **DAG**. "Directed" means relationships have direction; each commit points to its parent(s). "Acyclic" means no loops. You can't have a commit that eventually points back to itself. This structure is fundamental to how Git works.
 
 The simplest DAG is linear history:
 
@@ -93,7 +93,7 @@ The simplest DAG is linear history:
 commit1 → commit2 → commit3 → commit4 (HEAD)
 ```
 
-Each commit points to one parent. This is the happy path—developers committing sequentially on main.
+Each commit points to one parent. This is the happy path. Developers committing sequentially on main.
 
 But Git branches, and when you merge, things get more complex:
 
@@ -115,7 +115,7 @@ commit1 → commit2 → commit5 → commit6 (main)
            commit3 → commit4 → merge
 ```
 
-Why does this matter? When Git merges two branches, it needs their **common ancestor**—the last commit both branches share. Git traverses the DAG backward from both tips until it finds it. That's the "merge base." Git then performs a **three-way merge** using the merge base, main's tip, and feature's tip—which we'll explore next.
+Why does this matter? When Git merges two branches, it needs their **common ancestor**. This is the last commit both branches share. Git traverses the DAG backward from both tips until it finds it. That's the "merge base." Git then performs a **three-way merge** using the merge base, main's tip, and feature's tip. We'll explore this next.
 
 The DAG structure makes Git fast. Queries like "What commits are on main but not on feature?" or "What's the common ancestor?" are cheap to answer. Your commit history's shape directly affects performance.
 
@@ -145,7 +145,7 @@ function greet(name) {
 
 Different? Yes. But what happened? Did feature *remove* the console.log line, or did main *add* it? Did feature *add* the return statement, or did main *remove* it? A two-way merge can't tell. It just sees two different versions and declares a conflict.
 
-But you know what *didn't* change. You know the original content. You know what each side did intentionally. That knowledge is crucial. If you had the original version—the common ancestor—you could compare both changes *against that baseline*. Then you'd understand: "feature added a return statement and removed the console.log. Main kept both. These don't conflict—they're complementary changes."
+But you know what didn't change. You know the original content. You know what each side did intentionally. That knowledge is crucial. If you had the original version (the common ancestor), you could compare both changes against that baseline. Then you'd understand: "feature added a return statement and removed the console.log. Main kept both. These don't conflict. They're complementary changes."
 
 This is why Git uses **three-way merge** instead.
 
@@ -285,11 +285,11 @@ This is more readable when you need to understand what changed and why. You can 
 git config merge.conflictstyle diff3
 ```
 
-Understanding these markers helps you resolve conflicts faster and more accurately. You're not just staring at two versions—you're seeing the intentional changes on each side relative to the common ancestor.
+Understanding these markers helps you resolve conflicts faster and more accurately. You're not just staring at two versions. You're seeing the intentional changes on each side relative to the common ancestor.
 
 ### Recursive Merge: When Merges Have Merges
 
-Here's a wrinkle: what if the branch you're merging is itself a merge? What if feature-b branched off feature-a, which branched off main? Now when you merge feature-b into main, the merge base isn't main—it's the tip of feature-a. But feature-a is a merge commit.
+Here's a wrinkle: what if the branch you're merging is itself a merge? What if feature-b branched off feature-a, which branched off main? Now when you merge feature-b into main, the merge base isn't main. It's the tip of feature-a. But feature-a is a merge commit.
 
 This is where **recursive merge** comes in.
 
@@ -321,7 +321,7 @@ This is powerful for complex histories where multiple integration points exist. 
 
 Three-way merge is intuitive because it mirrors how humans think about changes. You don't ask "are these two files different?" You ask "what did each side change relative to what they started with?" That understanding unlocks automatic conflict resolution for independent changes and precise conflict reporting for true conflicts.
 
-The conflict markers aren't obstacles—they're information. They show you exactly what Git couldn't reconcile, and why. And the base version is always recoverable with git show, so you're never without context.
+The conflict markers aren't obstacles. They're information. They show you exactly what Git couldn't reconcile and why. And the base version is always recoverable with git show, so you're never without context.
 
 Recursive merge ensures that even complex branching histories merge correctly, finding the right base automatically. This makes Git reliable even as team workflows grow more intricate.
 
@@ -329,7 +329,7 @@ Recursive merge ensures that even complex branching histories merge correctly, f
 
 ### Understanding Merging Strategies
 
-You now understand how three-way merge works—Git finds a common ancestor, diffs both sides against it, and reconciles the changes. But three-way merge is just the mechanism. The *strategy* is how you organize the result in your commit history.
+You now understand how three-way merge works. Git finds a common ancestor, diffs both sides against it, and reconciles the changes. But three-way merge is just the mechanism. The *strategy* is how you organize the result in your commit history.
 
 Think of it this way: three-way merge is the engine. The strategy is the transmission. The engine always runs the same way; the transmission decides what you do with the output.
 
@@ -504,7 +504,7 @@ Which strategy fits your team? Here's a practical guide:
 **Any team, any size?**
 → Use **squash** for debugging commits, experimental branches, or WIP. Keep main squeaky clean.
 
-**Key insight**: All three strategies use three-way merge under the hood. The strategy is purely about post-merge organization. There's no "best" strategy—only what works for your team's values.
+**Key insight**: All three strategies use three-way merge under the hood. The strategy is purely about post-merge organization. There's no "best" strategy. Only what works for your team's values.
 
 Consider also:
 
@@ -512,7 +512,7 @@ Consider also:
 - **Size**: Bigger teams need more traceability.
 - **Workflow**: Fast-moving startups might prefer rebase; established products prefer merge commits.
 
-Different teams, different needs. The strategy you choose doesn't change how Git works—it just changes how your history tells your team's story.
+Different teams, different needs. The strategy you choose doesn't change how Git works. It just changes how your history tells your team's story.
 
 ## Part 4: Team Velocity Impact
 
@@ -528,7 +528,7 @@ jkl3456 Fix the thing we just reverted
 mno7890 Add feature we're reviewing
 ```
 
-You're reviewing a single feature, but you're wading through five commits—half of which are debugging and reverting. Your brain burns cycles figuring out "which changes matter?" You have to re-read multiple commits to build a mental model of what the feature actually does.
+You're reviewing a single feature, but you're wading through five commits. Half of them are debugging and reverting. Your brain burns cycles figuring out "which changes matter?" You have to re-read multiple commits to build a mental model of what the feature actually does.
 
 Now imagine the same feature with a clean, rebase-based history:
 
@@ -539,13 +539,13 @@ def5678 Add conflict detection for edge cases
 
 Two commits. Both are intentional. Both tell a story. Each one is self-contained and reviewable. Your code review is faster because the history itself is uncluttered.
 
-Here's the connection to Git internals: when you rebase, you're using three-way merge locally (replaying commits on main's tip) and surfacing conflicts immediately. Small, tight commits let you resolve conflicts early. When you merge a feature into main, the history is pristine—no intermediate debugging steps, no failed attempts. Reviewers see the finished work.
+Here's the connection to Git internals: when you rebase, you're using three-way merge locally (replaying commits on main's tip) and surfacing conflicts immediately. Small, tight commits let you resolve conflicts early. When you merge a feature into main, the history is pristine. No intermediate debugging steps, no failed attempts. Reviewers see the finished work.
 
 The velocity impact is real. Teams with clean histories spend less time reviewing. Code gets merged faster. Feedback cycles tighten. And when a bug appears months later, you bisect through a linear history instead of a branching mess. That's the payoff of understanding how commits actually work: you choose strategies that make your history readable.
 
 ### Fewer Conflicts = Faster Merges
 
-Merge conflicts are expensive. They interrupt your workflow. They require manual resolution. They introduce risk—if you resolve a conflict wrong, you silently introduce a bug that passes code review because everyone assumes Git got it right.
+Merge conflicts are expensive. They interrupt your workflow. They require manual resolution. They introduce risk. If you resolve a conflict wrong, you silently introduce a bug that passes code review because everyone assumes Git got it right.
 
 Understanding the three-way merge algorithm helps you avoid conflicts in the first place.
 
@@ -555,7 +555,7 @@ Smart teams use rebase to surface conflicts early. Here's the pattern: feature b
 
 Compare this to a team that merges once per week: branches live for seven days, main changes ten times a day, and suddenly you're merging into a version of main that's completely different from what the branch was built on. Conflicts explode. The merge becomes a days-long effort instead of minutes.
 
-The velocity implication: merge conflicts are bottlenecks. A team that rebases frequently (small conflicts immediately) spends the same total time resolving conflicts as a team that merges infrequently (huge conflict later)—but the impact is radically different. Early conflicts are resolved by one person locally. Late conflicts block the entire team. One feels like work. The other feels like waiting.
+The velocity implication: merge conflicts are bottlenecks. A team that rebases frequently (small conflicts immediately) spends the same total time resolving conflicts as a team that merges infrequently (huge conflict later). But the impact is radically different. Early conflicts are resolved by one person locally. Late conflicts block the entire team. One feels like work. The other feels like waiting.
 
 Add this to your toolkit: if your team struggles with merge conflicts, don't blame Git. Look at your branch strategy. Short-lived branches + frequent rebasing = fewer conflicts, faster velocity.
 
@@ -567,7 +567,7 @@ When your team has a consistent merge strategy, onboarding is dramatically faste
 
 Consistency removes cognitive overhead. Decisions that should be automatic become automatic. The new developer spends their energy on the code, not on workflow logistics.
 
-Beyond onboarding, consistency builds institutional knowledge. When someone reads your history six months later, they know exactly what to expect. If they see a linear history, they know every commit in main is production-ready code. If they see merge commits, they know integration points are marked. The history isn't just a record—it's documentation of *how your team works*.
+Beyond onboarding, consistency builds institutional knowledge. When someone reads your history six months later, they know exactly what to expect. If they see a linear history, they know every commit in main is production-ready code. If they see merge commits, they know integration points are marked. The history isn't just a record. It's documentation of how your team works.
 
 Inconsistency creates friction. One developer rebases, another merges, another squashes. The history becomes a patchwork. Reviewers stumble. New developers are confused. You waste time debating "should this be a merge or rebase?" when you should be writing code.
 
@@ -575,10 +575,10 @@ Inconsistency creates friction. One developer rebases, another merges, another s
 
 You started this essay not understanding why Git works the way it does. You wondered why it cares about content hashing, why three-way merge exists, why merge strategies matter. Now you know: every design choice cascades outward and shapes how your team collaborates.
 
-Git's content addressing—hashing commits based on their full state—makes history immutable and verifiable. That matters less in day-to-day work and more on the rare day someone accidentally corrupts a repository. Git's three-way merge algorithm uses a common ancestor to resolve conflicts intelligently. That's the engine. The merge strategy—merge commits, rebase, squash—is how you arrange the result. All three strategies use three-way merge under the hood. What differs is philosophy: Do you preserve full integration history? Do you linearize for readability? Do you hide implementation details?
+Git's content addressing (hashing commits based on their full state) makes history immutable and verifiable. That matters less in day-to-day work and more on the rare day someone accidentally corrupts a repository. Git's three-way merge algorithm uses a common ancestor to resolve conflicts intelligently. That's the engine. The merge strategy (merge commits, rebase, squash) is how you arrange the result. All three strategies use three-way merge under the hood. What differs is philosophy. Do you preserve full integration history? Do you linearize for readability? Do you hide implementation details?
 
 There's no universally "correct" answer. A small startup might rebase ruthlessly because they value a clean main branch. A large team might use merge commits for auditability. A team with frequent small fixes might squash liberally. All are right, because they're aligned with their team's values.
 
-The payoff is concrete and measurable. Clean histories enable faster code reviews. Smart rebasing reduces merge conflicts. Consistent strategies speed up decision-making. Together, these improvements compound into something that looks like improved developer velocity—but it's really just reduced friction.
+The payoff is concrete and measurable. Clean histories enable faster code reviews. Smart rebasing reduces merge conflicts. Consistent strategies speed up decision-making. Together, these improvements compound into something that looks like improved developer velocity. But it's really just reduced friction.
 
 Next time you're debating merge strategy, remember: you're not just choosing a workflow. You're choosing how your team reads and understands your codebase. You're optimizing for how humans collaborate with Git. Understand the internals. Choose the strategy that fits your team. Watch your velocity improve.
