@@ -1,0 +1,189 @@
+---
+title: "The Request Succeeded. The Calendars Still Disagreed."
+description: "Why successful requests and completed workers aren't enough to prove that two independently changing systems remain synchronized."
+date: "2026-07-15"
+tags: ["distributed-systems", "reliability", "data-synchronization"]
+status: "published"
+readTime: "10 min read"
+connections: ["a-feature-is-not-done-when-the-pr-merges"]
+---
+
+The API returned 200 OK. The worker completed. The database contained the event. The calendars were still out of sync.
+
+This isn't the kind of bug that makes dashboards light up. No timeouts. No exceptions. No failed reconciliation jobs screaming in Slack. Everything moved through the system exactly as designed. The user connected an external calendar to our product, the initial import succeeded, events appeared in the interface, tests passed, and monitoring showed healthy metrics. Then, three days later, the user edited an event in the external calendar. One system reflected the change. The other didn't. Nothing obviously broke.
+
+Calendar synchronization taught me something I hadn't anticipated: almost every operation in the system could succeed while the feature as a whole remained fundamentally wrong.
+
+## The Mental Model That Wasn't Enough
+
+When I first approached the problem, the shape seemed clear enough. A user connects an external calendar. The system fetches existing events. It normalizes provider-specific formats into a common schema. It stores them in the database. The frontend displays them. Done.
+
+Synchronization felt like an import operation. Take data from place A, move it to place B, and close the door behind you. The operation has a beginning and an end. You can measure it: Did the fetch succeed? Did the store complete? Did the user see the data? Yes? Then we're done.
+
+The mental model was tempting because it mapped cleanly to code. You write a function that accepts provider credentials, returns a list of events, and hands them off to storage. You test it. You deploy it. The first time a user connects their calendar, the function runs, events appear, and everyone is happy.
+
+But synchronization isn't import. Import finishes. Synchronization continues.
+
+The moment the user connected their external calendar, they also gave that calendar permission to change independently. They might edit an event's time. Cancel an occurrence in a recurring series. Move a meeting to a different day. Add a description. Add attendees. Delete the event entirely. Any of these changes could happen in the external system while our product was running, while the user was working, while new events were being added locally.
+
+The question I hadn't fully reckoned with wasn't "Can we fetch these events?" It was "What does it mean for two independently changing systems to remain synchronized?"
+
+## Local Success Doesn't Prove Global Correctness
+
+Here's where the confusion started. A successful synchronization operation produces observable local evidence:
+
+The HTTP request returned 200.
+The worker reached its final instruction without throwing.
+The database write committed and rows were inserted.
+The user's event count increased.
+Dashboards showed healthy throughput.
+
+All of this is true. All of it was evidence. But it was evidence only about the operation itself, not about the relationship between the two systems.
+
+A request returning 200 OK proved the provider accepted the request. A worker completing without errors proved the job reached its intended exit point. A database commit proved the transaction passed integrity constraints. None of these things proved that every relevant change was observed, or that the same event wasn't processed twice, or that a newer value wasn't overwritten by an older event, or that a recurring event was interpreted correctly, or that a missed notification would eventually be recovered, or that a local user edit wouldn't later disappear.
+
+I started separating local success from global correctness. Local success meant one operation worked as intended. Global correctness meant the two systems still agreed on what mattered.
+
+The system could demonstrate local success very easily. The system struggled to prove global correctness at all.
+
+## Failure Modes That Look Like Success
+
+The concrete failures that eventually forced a reckoning all shared the same shape: healthy operation, wrong result.
+
+**Duplicate delivery**
+
+A webhook notification fires when an event is updated. The worker processes the change: it loads the event, normalizes it, writes it to the database, and marks the notification as consumed. Successful operation.
+
+The webhook fires again. Maybe it was retried by the provider. Maybe a network retry duplicated the message. Maybe the same update was delivered through multiple channels. The worker processes it again. It loads the event, normalizes it, writes it to the database, marks the notification as consumed. Successful operation.
+
+Now the database contains duplicate records for the same event, or the same event was updated twice in a way that breaks subsequent queries, or side effects ran twice and produced inconsistent state. No operation failed. The system just processed the same change multiple times as if each one were independent.
+
+I initially believed the fix was simple: add a unique constraint. Store provider ID plus version hash plus update timestamp. If the same event version appears twice, the database rejects it. The second insert fails. That sounds like we've caught the problem.
+
+But then the question became: what do we do when the insert fails? Do we treat it as success because it's idempotent? Do we treat it as an error? Do we log it somewhere? And what about side effects that happened during the first write? Notifications sent, counters incremented, webhooks fired? Do those happen again or not?
+
+The operation succeeded twice. The system succeeded zero times.
+
+**Missed change notification**
+
+Calendar providers send push notifications when events change. Our system listens for these notifications, processes them, and updates the internal state. It's elegant and fast. The user makes a change in Google Calendar, a webhook fires within seconds, our system processes it, and the user sees the update in our product almost immediately.
+
+But a push notification is a signal, not a guarantee. Networks lose packets. Services get overloaded and drop messages. Webhooks fail to be delivered, get retried inconsistently, or are delivered out of order. A notification telling us that an event was moved to 3 PM might arrive after a notification that it was deleted. How do we know which change is authoritative?
+
+We don't. Not from a single notification.
+
+Real-time notifications make synchronization fast. Reconciliation makes it believable. A truly reliable system doesn't trust that notifications alone prove the current state. It periodically checks the provider's current state against what it believes the state to be. If they disagree, reconciliation figures out what happened and repairs it.
+
+Implementing reconciliation is expensive. It means periodic API calls that consume quota and compute. For a large calendar, it means comparing hundreds or thousands of events and determining which local records are stale, missing, or somehow corrupted. But skipping reconciliation means trusting that no notifications were ever lost, no retries duplicated events, no provider downtime created inconsistencies, and no bugs introduced bad state. That's a strong claim to make about any system.
+
+**Recurring events**
+
+A recurring event isn't a single entity. It's a rule that generates individual occurrences, plus a set of exceptions: "The meeting is every Monday at 2 PM, except March 1st is cancelled, and March 8th is moved to 3 PM."
+
+When a user edits the event, what did they actually change?
+
+Did they modify the entire series? Did they modify only this occurrence? Did they modify this occurrence and all future occurrences? Did they change the recurrence rule itself? Each of these actions has different semantics and produces a different correct result.
+
+A naive synchronization system might fetch the recurring event, normalize it into a flat list of individual occurrences, and store them as separate events. This works until the user modifies one occurrence. Now the provider's state represents a single series with an exception. The local system represents a flat list of 50 independent events where one has been modified. When the system checks whether they're synchronized, it can't tell. It has no model of what exceptions mean.
+
+I've built systems that represented recurring events correctly and systems that didn't. The ones that worked required explicit data modeling decisions: a recurring series is a first-class entity, occurrences are generated from it, exceptions are stored separately, and modifications track which level of the hierarchy changed. The ones that failed tried to flatten everything and lost the structure that made the synchronization operation meaningful.
+
+The API call succeeded. The event was stored. The user's recurring meeting was now represented incorrectly.
+
+**Conflicting edits**
+
+A user edits an event locally while simultaneously the provider's version of the event changes. Both changes are valid. Both should probably be preserved. How?
+
+Whose responsibility is the event's time? The provider's, the local product's, or both? If the product changes the time locally, should that push back to the provider or detach the event from the external calendar? If the provider changes the description, should that appear in the local product? Can a field be edited in both places independently?
+
+Without answers to these questions, a successful sync operation is still a failed feature. The system can fetch and store data all day. But if you haven't decided which system owns which fields, you can't implement synchronization correctly. You can only implement disagreement.
+
+## Synchronization Is a Model of Ownership
+
+This is where backend engineering and product design become inseparable.
+
+Many bugs that looked like synchronization failures were actually unresolved ownership questions. The code was working correctly according to its design. The design was wrong.
+
+In one system I worked on, we imported events as read-only context. The external calendar was the source of truth. The local product could display these events, set reminders, and organize them, but all structural changes (time, title, attendees) were owned by the provider. This was a choice. It had implications.
+
+A user couldn't move an imported event to a different time in our product because we'd immediately have a conflict: the local and external times would disagree, and we'd defined the external time as correct. So every sync would revert the user's change.
+
+The alternative was bidirectional synchronization: changes in either system push back to the other. This requires much more careful handling. Conflicts can't just be overwritten. They have to be detected, represented to the user, and resolved according to rules they can understand.
+
+A third alternative was detachment: an imported event can become a local event if the user edits it. Once detached, the two are no longer synchronized. This solves the conflict problem but creates a discoverability problem. Which events are attached? Which are local? What happens if the external event is deleted while a local copy exists?
+
+Each choice produces a different architecture. Each requires different guarantees. Before asking how to synchronize a field, ask who owns it. The answer determines everything else.
+
+## Reconciliation: Acknowledging Imperfection
+
+No matter how reliable the incremental sync path becomes, the system has to assume that something will eventually go wrong.
+
+A notification will be missed. A worker will crash mid-operation. A provider's API will respond inconsistently. A bug will write incorrect state. A deployment will interrupt processing. Historical data will exist that was created under older logic and doesn't match the current model.
+
+A reconciliation process checks whether the current internal state still agrees with the provider's current state. It's not fast. It consumes quota. It might be expensive to compute. But it answers a question the normal sync path can't: "Are we still synchronized?"
+
+The normal sync path says, "Apply this change." Reconciliation asks, "Are we still correct?"
+
+I've seen systems that invested heavily in making the incremental path perfect, adding retries and idempotency and exactly-once guarantees, and then skipped reconciliation entirely. They worked great until they didn't. A provider outage during an operation. A subtle bug in update logic. A schema migration that broke assumptions about existing data. Six months later, some users' calendars started showing duplicate events or missing events or events with corrupted data. The system could point to every successful operation. It had no way to detect that the cumulative result was wrong.
+
+Reconciliation is the mechanism that acknowledges a harder truth: the system can't prevent all synchronization problems. But it can detect them, explain them, and repair them.
+
+The trade-offs are real. Aggressive reconciliation might overwrite legitimate local state. Partial reconciliation might miss some inconsistencies. Reconciliation itself must be observable and idempotent—if a reconciliation job crashes midway, running it again must not corrupt more data. These are hard problems.
+
+But they're more tractable than the alternative: a system that's correct by assumption and wrong in practice.
+
+## Four Different Meanings of Success
+
+I started using a framework to distinguish different layers of correctness.
+
+**Operation success**: Did this API call, background worker, or database transaction complete? The request returned 200. The worker exited its main function. The transaction committed. This is the easiest to measure and the easiest to get wrong. A successful operation is necessary for synchronization but not sufficient.
+
+**Workflow success**: Did the entire asynchronous chain reach its intended state? Not just did the fetch succeed, but did the fetch succeed, the transform complete, the database write commit, and the side effects fire? Did the user receive the notification indicating that data had arrived? This is harder to measure but more meaningful than operation success. But still not sufficient.
+
+**Data success**: Is the stored representation complete, unique, current, and internally consistent? No duplicate events. No missing events. No stale data being treated as current. No violation of the ownership model. This requires understanding not just whether an operation worked but whether the database as a whole represents the world correctly.
+
+**Product success**: Does the user see the right information? Can they understand what the system did? Do the results match their expectations? A reconciliation job might fix a database inconsistency without the user ever knowing anything was wrong. That's product success. But if the user edits an event and the change silently disappears three hours later because a background sync overwrote it, that's operation success combined with product failure.
+
+A fifth level exists: **convergence success**. After delays, retries, missed signals, independent edits, and recovery mechanisms run, do the systems eventually return to an acceptable shared state? Not just is the current state correct, but will it stay correct even if another disruption occurs?
+
+The mistakes I've made have almost always been measuring the wrong layer. Dashboards show operation success very clearly. They show workflow success with effort. They struggle to show data success, rarely show product success, and almost never show convergence success. So systems optimize for the metrics they can see and fail on the metrics they can't.
+
+## What "Done" Means for Sync Features
+
+A pull request for calendar synchronization isn't done merely when the code is reviewed, tests pass, the endpoint is deployed, and the first import works. Those are necessary conditions. They're not sufficient.
+
+A sync feature reaches a stronger completion threshold when the team can answer harder questions:
+
+How will we detect a change was missed? What's the reconciliation strategy?
+
+Can the same event be processed more than once safely? Is the system idempotent?
+
+What happens when updates arrive out of order? How is ordering determined?
+
+How are recurring occurrences represented? What happens when the series changes but not individual occurrences, or vice versa?
+
+Which system owns each field? What happens if both systems try to change it?
+
+How are conflicting edits detected and resolved? Can the system explain what happened to the user?
+
+Can we trace a user-visible event back to its source? If something is wrong, can we explain why?
+
+What does the user see while synchronization is delayed? Are stale events labeled as such?
+
+Who looks at the evidence after release? What signals indicate that synchronization is working correctly?
+
+These aren't questions to answer with perfect solutions. Many of them have legitimate trade-offs. A read-only, one-time import needs different answers than a user-facing bidirectional sync. A small team's integration product needs different answers than a large provider's platform. The engineering investment should follow the product promise.
+
+But they're questions that have to be answered deliberately. Reliability requirements don't come from the word "sync." They come from what users believe that word promises.
+
+## Closing
+
+The request succeeded. That was useful information. It just wasn't proof that the calendars agreed.
+
+In distributed systems, "done" is rarely the moment a component finishes its work. It's the point where the system has enough evidence, recovery mechanisms, and ownership rules to keep producing the result users were promised. A successful API call is one piece of evidence. Idempotent processing is another. Reconciliation is another. Clear ownership boundaries and conflict resolution are others.
+
+Calendar synchronization is just one shape of this problem. Search indexing has it: did the document get indexed immediately, or did it get queued? When is indexing "done"? Did you detect when an indexed document changed? Data replication has it: when nodes disagree, which is authoritative? Webhook-driven systems have it: did the webhook fire, and if it fired, did you actually process the change correctly?
+
+The lesson isn't specific to calendars. It's about recognizing that any system promising to keep two independently changing things synchronized is making a strong claim. The claim isn't proven by the moment a single operation finishes. It's proven by whether the system can detect disagreement, explain it, and guide itself back to consistency.
+
+That's harder than 200 OK. But it's what users actually need.
