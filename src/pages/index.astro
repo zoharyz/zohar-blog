@@ -27,7 +27,7 @@ const recentSnippets = publishedSnippets.slice(0, 5);
       <h1>Zohar Yzgeav</h1>
       <p class="subtitle">Architecting systems at scale • AI engineering • Backend infrastructure</p>
       <p class="description">
-        I write about building and scaling production systems with a focus on AI engineering, distributed systems, and backend architecture. These essays share lessons learned designing systems that handle complexity, leverage modern AI capabilities, and evolve as requirements change. Topics include system design, reliability patterns, infrastructure decisions, and the craft of building systems that teams can reason about and maintain.
+        Writing about system design, reliability patterns, and the thinking behind scaling systems. <a href="/about">Learn more about me</a>.
       </p>
     </section>
 
@@ -120,6 +120,17 @@ const recentSnippets = publishedSnippets.slice(0, 5);
     line-height: 1.6;
     color: var(--color-text);
     margin: 1rem 0 0;
+  }
+
+  .description a {
+    color: var(--color-link);
+    text-decoration: none;
+    border-bottom: 1px solid var(--color-link);
+  }
+
+  .description a:hover {
+    color: var(--color-link-hover);
+    border-bottom-color: var(--color-link-hover);
   }
 
   .essays-section,
