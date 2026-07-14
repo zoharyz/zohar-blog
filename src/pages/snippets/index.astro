@@ -9,11 +9,11 @@ const snippets = await getCollection('snippets');
 const publishedSnippets = sortContentByDate(getPublishedContent(snippets));
 ---
 
-<BaseLayout title="Snippets" description="Short notes, observations, and technical thoughts.">
+<BaseLayout title="Write-ups" description="Short notes, observations, and technical thoughts.">
   <Header />
   <main>
     <div class="container">
-      <h1>Snippets</h1>
+      <h1>Write-ups</h1>
     </div>
     <ArticleList articles={publishedSnippets} type="snippets" />
   </main>

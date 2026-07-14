@@ -1,14 +1,23 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
+import TagCloud from '../components/TagCloud.astro';
 import { getCollection } from 'astro:content';
 import { getPublishedContent, sortContentByDate } from '../lib/content';
+import { countTags } from '../lib/tags';
 
 const essays = await getCollection('essays');
 const snippets = await getCollection('snippets');
 
-const publishedEssays = sortContentByDate(getPublishedContent(essays)).slice(0, 4);
-const publishedSnippets = sortContentByDate(getPublishedContent(snippets)).slice(0, 3);
+const publishedEssays = sortContentByDate(getPublishedContent(essays));
+const publishedSnippets = sortContentByDate(getPublishedContent(snippets));
+
+// Get all tags with counts
+const allTags = countTags(essays, snippets);
+
+// Get recent content for each type
+const recentEssays = publishedEssays.slice(0, 5);
+const recentSnippets = publishedSnippets.slice(0, 5);
 ---
 
 <BaseLayout title="Zohar Yzgeav">
@@ -22,18 +31,28 @@ const publishedSnippets = sortContentByDate(getPublishedContent(snippets)).slice
       </p>
     </section>
 
+    <TagCloud tags={allTags} />
+
     <section class="essays-section">
       <h2>Essays</h2>
       {publishedEssays.length === 0 ? (
         <p class="empty">No essays yet.</p>
       ) : (
         <ul class="article-preview">
-          {publishedEssays.map((essay) => {
+          {recentEssays.map((essay) => {
             const slug = essay.id.replace(/\.mdx?$/, '');
+            const tagsString = essay.data.tags?.join(',') || '';
             return (
-              <li>
+              <li data-post-tags={tagsString}>
                 <a href={`/essays/${slug}`} class="title">{essay.data.title}</a>
                 <p class="meta">{essay.data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                {essay.data.tags && (
+                  <div class="tags">
+                    {essay.data.tags.map(tag => (
+                      <span class="tag">#{tag}</span>
+                    ))}
+                  </div>
+                )}
               </li>
             );
           })}
@@ -43,23 +62,31 @@ const publishedSnippets = sortContentByDate(getPublishedContent(snippets)).slice
     </section>
 
     <section class="snippets-section">
-      <h2>Snippets</h2>
+      <h2>Write-ups</h2>
       {publishedSnippets.length === 0 ? (
-        <p class="empty">No snippets yet.</p>
+        <p class="empty">No write-ups yet.</p>
       ) : (
         <ul class="article-preview">
-          {publishedSnippets.map((snippet) => {
+          {recentSnippets.map((snippet) => {
             const slug = snippet.id.replace(/\.mdx?$/, '');
+            const tagsString = snippet.data.tags?.join(',') || '';
             return (
-              <li>
+              <li data-post-tags={tagsString}>
                 <a href={`/snippets/${slug}`} class="title">{snippet.data.title}</a>
                 <p class="meta">{snippet.data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                {snippet.data.tags && (
+                  <div class="tags">
+                    {snippet.data.tags.map(tag => (
+                      <span class="tag">#{tag}</span>
+                    ))}
+                  </div>
+                )}
               </li>
             );
           })}
         </ul>
       )}
-      <a href="/snippets" class="view-all">View all snippets →</a>
+      <a href="/snippets" class="view-all">View all write-ups →</a>
     </section>
   </main>
 </BaseLayout>
@@ -72,104 +99,98 @@ const publishedSnippets = sortContentByDate(getPublishedContent(snippets)).slice
   }
 
   .hero {
-    margin: 3.5rem 0 4rem;
+    margin: 2rem 0 3rem;
   }
 
-  .hero h1 {
-    font-size: 2.8rem;
+  h1 {
+    font-size: 2.4rem;
     font-family: var(--font-sans);
     font-weight: 700;
-    margin: 0 0 1rem;
-    line-height: 1.2;
+    margin: 0 0 0.5rem;
   }
 
   .subtitle {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     color: var(--color-text-secondary);
-    margin: 0.5rem 0;
-    font-weight: 500;
+    margin: 0 0 1rem;
   }
 
   .description {
     font-size: 1rem;
-    line-height: 1.75;
-    color: var(--color-text-secondary);
-    margin: 1.5rem 0 0;
-    max-width: 100%;
-    font-family: var(--font-serif);
+    line-height: 1.6;
+    color: var(--color-text);
+    margin: 1rem 0 0;
   }
 
   .essays-section,
   .snippets-section {
-    margin-bottom: 4rem;
+    margin: 3rem 0;
   }
 
-  .essays-section h2,
-  .snippets-section h2 {
-    font-size: 1.6rem;
+  h2 {
+    font-size: 1.5rem;
     font-family: var(--font-sans);
     font-weight: 700;
-    margin: 2.5rem 0 1.5rem;
-    border-bottom: none;
-    padding-bottom: 0;
+    margin: 0 0 1rem;
   }
 
   .article-preview {
     list-style: none;
     padding: 0;
-    margin: 2rem 0;
+    margin: 0 0 1.5rem;
   }
 
   .article-preview li {
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 1.5rem;
   }
 
-  .article-preview li:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-    padding-bottom: 0;
-  }
-
-  .article-preview .title {
-    display: block;
-    font-family: var(--font-sans);
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--color-text);
+  .article-preview a {
     text-decoration: none;
-    margin-bottom: 0.4rem;
-    line-height: 1.4;
-    border: none;
+    color: var(--color-text);
+    font-weight: 600;
   }
 
-  .article-preview .title:hover {
+  .article-preview a:hover {
     color: var(--color-link);
   }
 
-  .article-preview .meta {
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
+  .title {
+    display: block;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .meta {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
     margin: 0;
   }
 
-  .view-all {
-    display: inline-block;
-    color: var(--color-link);
-    text-decoration: none;
-    font-weight: 500;
-    font-family: var(--font-sans);
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
   }
 
-  .view-all:hover {
-    color: var(--color-link-hover);
-    text-decoration: underline;
+  .tag {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
   }
 
   .empty {
-    color: var(--color-text-muted);
+    color: var(--color-text-secondary);
     font-style: italic;
+  }
+
+  .view-all {
+    text-decoration: none;
+    color: var(--color-link);
+    font-weight: 500;
+  }
+
+  .view-all:hover {
+    text-decoration: underline;
   }
 
   @media (max-width: 768px) {
@@ -177,26 +198,16 @@ const publishedSnippets = sortContentByDate(getPublishedContent(snippets)).slice
       padding: 0 1.5rem;
     }
 
-    .hero h1 {
-      font-size: 2.2rem;
-    }
-
-    .subtitle {
-      font-size: 1rem;
-    }
-
-    .description {
-      font-size: 0.95rem;
-    }
-  }
-
-  @media (max-width: 640px) {
-    .hero {
-      margin: 2rem 0 3rem;
-    }
-
-    .hero h1 {
+    h1 {
       font-size: 1.8rem;
+    }
+
+    h2 {
+      font-size: 1.3rem;
+    }
+
+    .title {
+      font-size: 1rem;
     }
   }
 </style>
