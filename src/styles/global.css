@@ -1,4 +1,18 @@
 :root {
+  --color-text: #e5e5e5;
+  --color-text-secondary: #b8b8b8;
+  --color-text-muted: #808080;
+  --color-bg: #0f0f0f;
+  --color-bg-secondary: #1a1a1a;
+  --color-border: #2a2a2a;
+  --color-link: #5a9fff;
+  --color-link-hover: #7bb1ff;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font-serif: -apple-system, BlinkMacSystemFont, 'Segoe UI', Georgia, 'Times New Roman', serif;
+}
+
+[data-theme="light"] {
   --color-text: #222;
   --color-text-secondary: #666;
   --color-text-muted: #999;
@@ -7,22 +21,6 @@
   --color-border: #e8e8e8;
   --color-link: #0066cc;
   --color-link-hover: #0052a3;
-
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-  --font-serif: -apple-system, BlinkMacSystemFont, 'Segoe UI', Georgia, 'Times New Roman', serif;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-text: #e5e5e5;
-    --color-text-secondary: #b8b8b8;
-    --color-text-muted: #808080;
-    --color-bg: #0f0f0f;
-    --color-bg-secondary: #1a1a1a;
-    --color-border: #2a2a2a;
-    --color-link: #5a9fff;
-    --color-link-hover: #7bb1ff;
-  }
 }
 
 * {

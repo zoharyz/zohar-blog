@@ -2,6 +2,7 @@
 import BaseLayout from './BaseLayout.astro';
 import { getReadingTime } from '../lib/readingTime';
 import Tag from '../components/Tag.astro';
+import ThemeToggle from '../components/ThemeToggle.astro';
 
 interface Props {
   title: string;
@@ -17,13 +18,15 @@ interface Props {
 const { title, description, date, updated, tags = [], connections = [], content, type } = Astro.props;
 const readingTime = getReadingTime(content);
 const formattedDate = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-const typeLabel = type.charAt(0).toUpperCase() + type.slice(1) + 's';
 ---
 
 <BaseLayout title={title} description={description}>
   <div class="container">
     <header class="article-header">
-      <a href={`/${type}s`} class="back-link">← Back to {typeLabel}</a>
+      <div class="header-top">
+        <a href="/" class="back-link">← Back to homepage</a>
+        <ThemeToggle />
+      </div>
       <h1>{title}</h1>
       <p class="description">{description}</p>
       <div class="metadata">
@@ -68,12 +71,17 @@ const typeLabel = type.charAt(0).toUpperCase() + type.slice(1) + 's';
     padding: 3rem 2rem;
   }
 
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+
   .back-link {
     color: var(--color-link);
     text-decoration: none;
     font-size: 0.85rem;
-    margin-bottom: 2rem;
-    display: inline-block;
     font-family: var(--font-sans);
     border: none;
   }
@@ -155,6 +163,12 @@ const typeLabel = type.charAt(0).toUpperCase() + type.slice(1) + 's';
   @media (max-width: 768px) {
     .container {
       padding: 2rem 1.5rem;
+    }
+
+    .header-top {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
     }
 
     .article-header h1 {
