@@ -8,8 +8,7 @@ const isActive = (path: string) => currentPath === path || currentPath.startsWit
   <div class="container">
     <a href="/" class="logo">Zohar Yzgeav</a>
     <nav class="nav">
-      <a href="/essays" class={isActive('/essays') ? 'active' : ''}>Essays</a>
-      <a href="/snippets" class={isActive('/snippets') ? 'active' : ''}>Snippets</a>
+      <a href="/" class={isActive('/') && currentPath === '/' ? 'active' : ''}>Home</a>
       <a href="/about" class={isActive('/about') ? 'active' : ''}>About</a>
     </nav>
   </div>
