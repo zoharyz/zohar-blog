@@ -10,7 +10,7 @@
 - **Frequency**: As ideas fully develop, not forced schedule
 - **Examples**: "Why retry logic creates hidden bugs", architectural decisions, lessons learned
 
-### Snippets
+### Write-ups
 - **Length**: 300–800 words
 - **Purpose**: Quick observation, principle, or hard-won lesson
 - **Structure**: Observation → Why it matters → One key insight
@@ -68,7 +68,7 @@
    - Not a summary—a single insight or decision
    - Leave readers with something to think about or act on
 
-### Snippet Structure Template
+### Write-up Structure Template
 
 1. **Observation**: The insight in one sentence
 2. **Why it matters**: One paragraph on consequences or context
